@@ -1,51 +1,39 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private float horizontal;
-    private float speed = 8f;
-    private float jumpingPower = 16f;
-    private bool isFacingRight = true;
+    public PlayerControl controller;
+    public Animator animator;
 
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private LayerMask groundLayer;
+    public float runSpeed = 40f;
+
+    float horizontalMove = 0f;
+    bool jump = false;
 
     void Update()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
+        horizontalMove = Input.GetAxisRaw("Horizontal") * runSpeed;
 
-        if (Input.GetButtonDown("Jump") && IsGrounded())
+        animator.SetFloat("Speed", Mathf.Abs(horizontalMove));
+
+        if (Input.GetButtonDown("Jump"))
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+            jump = true;
+            animator.SetBool("IsJumping", true);
         }
-
-        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
-        }
-
-        Flip();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
-        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
+        // Move our character
+        controller.Move(horizontalMove * Time.fixedDeltaTime, jump);
+        jump = false;
     }
 
-    private bool IsGrounded()
+    public void OnLanding()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
-    }
-
-    private void Flip()
-    {
-        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
-        {
-            isFacingRight = !isFacingRight;
-            Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
-            transform.localScale = localScale;
-        }
+        animator.SetBool("IsJumping", false);
     }
 }
